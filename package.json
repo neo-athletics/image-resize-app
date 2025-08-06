@@ -1,0 +1,22 @@
+{
+  "name": "image-processor-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev:client": "npm --workspace client run dev",
+    "dev:server": "npm --workspace server run dev",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
