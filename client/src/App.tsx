@@ -3,7 +3,8 @@ import "./App.css";
 function App() {
   return (
     <div className="app-container">
-      <h1>Image Processor</h1>
+      <h1>Resize it</h1>
+      <button className="btn btn-primary">Primary</button>
     </div>
   );
 }

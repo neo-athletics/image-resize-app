@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev:client": "npm --workspace client run dev",
-    "dev:server": "npm --workspace server run dev",
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev": "concurrently \"npm --prefix client run dev\" \"npm --prefix server run dev\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,9 +12,5 @@
   "description": "",
   "devDependencies": {
     "concurrently": "^9.2.0"
-  },
-  "workspaces": [
-    "client",
-    "server"
-  ]
+  }
 }
