@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import sharp from "sharp";
 
+// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 4000;
 
