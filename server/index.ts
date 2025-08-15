@@ -16,15 +16,21 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const allowedExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+const allowedExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"];
 
 app.get("/", (req, res) => {
   res.json({ message: "Server is running!" });
 });
 
-app.get("/api/images", (req, res) => {
+app.get("/api/images", async (req, res) => {
   // Validate filename query parameter
-  const filename = req.query.filename as string;
+  const { filename, width, height, format } = req.query as {
+    filename: string;
+    width?: string;
+    height?: string;
+    format?: string;
+  };
+
   if (!/^[a-zA-Z0-9._-]+$/.test(filename)) {
     return res.status(400).send("Invalid filename");
   }
@@ -56,9 +62,21 @@ app.get("/api/images", (req, res) => {
     return res.status(404).send("File not found");
   }
 
-  console.log(imagePath);
-  // processImage(imagePath+filename, { width: 200, height: 200, format: "jpeg" });
-  res.json({ message: "API is working!" });
+  const widthNum = Number(width);
+  const heightNum = Number(height);
+
+  if (Number.isNaN(widthNum) || Number.isNaN(heightNum)) {
+    return res.status(400).send("Width and height must be valid numbers.");
+  }
+
+  console.log(fullFilePath);
+  const outputPath = processImage(fullFilePath, {
+    widthNum,
+    heightNum,
+    format,
+  });
+  // res.json({ message: "API is working!" });
+  res.sendFile(await outputPath);
 });
 
 app.listen(PORT, () => {
