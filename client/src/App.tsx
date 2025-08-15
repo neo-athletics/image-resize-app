@@ -5,9 +5,9 @@ function App() {
     <div className="app-container">
       <div className="hero  min-h-screen">
         <div className="hero-content flex-col lg:flex-row-reverse">
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:text-left ml-5">
             <h1 className="text-5xl font-bold">Resize It</h1>
-            <p className="py-6">
+            <p className="py-6 ">
               Image processing app that resizes and converts images to different
               formats.
             </p>
@@ -17,18 +17,20 @@ function App() {
               <fieldset className="fieldset">
                 <label className="label">Upload Image</label>
                 <input type="file" className="file-input file-input-primary" />
-                <label className="label">width</label>
+                <label className="label mt-2">Width</label>
                 <input
                   type="text"
                   placeholder="width"
                   className="input input-primary"
                 />
-                <label className="label">height</label>
+                <label className="label mt-2">Height</label>
                 <input
                   type="text"
                   placeholder="height"
                   className="input input-primary"
                 />
+                <label className="label mt-2">Format</label>
+
                 <select
                   defaultValue="Pick a format"
                   className="select select-primary"
@@ -38,7 +40,7 @@ function App() {
                   <option>png</option>
                   <option>webp</option>
                 </select>
-                <button className="btn btn-success">Success</button>
+                <button className="btn btn-success mt-4">Format It!</button>
               </fieldset>
             </div>
           </div>
