@@ -3,7 +3,10 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { processImage } from "./processImage";
-import fs from "fs";
+import fs, { read } from "fs";
+import multer from "multer";
+import sharp from "sharp";
+import { getMetadata } from "./readImage";
 
 // Initialize Express app
 const app = express();
@@ -16,12 +19,15 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// temp storage folder for Multer
+const upload = multer({ dest: path.join(__dirname, "uploads/") });
 const allowedExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"];
 
 app.get("/", (req, res) => {
   res.json({ message: "Server is running!" });
 });
 
+// Serve static files from the client build directory
 app.get("/api/images", async (req, res) => {
   // Validate filename query parameter
   const { filename, width, height, format } = req.query as {
@@ -77,6 +83,63 @@ app.get("/api/images", async (req, res) => {
   });
   // res.json({ message: "API is working!" });
   res.sendFile(await outputPath);
+});
+
+//route to handle image upload and processing
+
+app.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      console.log("No file uploaded");
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    let metadata = getMetadata(req.file.path);
+
+    const { width, height, format } = req.body; // user inputs
+
+    // Start sharp pipeline
+    let pipeline = sharp(req.file.path);
+
+    // Conditionally apply resize
+    if (width || height) {
+      pipeline = pipeline.resize(
+        width ? parseInt(width, 10) : undefined,
+        height ? parseInt(height, 10) : undefined
+      );
+    }
+    const buffer = await pipeline.toBuffer(); // triggers processing
+    const updatedMeta = await sharp(buffer).metadata();
+    console.log(updatedMeta, "updated metadata after resize");
+    const processedPath = path.join(
+      __dirname,
+      "cache",
+      `${path.parse(req.file.originalname).name}_${
+        width || (await metadata).width
+      }x${height || (await metadata).height}.${
+        allowedExtensions.includes(`.${format}`) || "jpeg"
+      }`
+    );
+    // Conditionally apply format
+    if (format && allowedExtensions.includes(`.${format}`)) {
+      pipeline = pipeline.toFormat(format as keyof sharp.FormatEnum);
+    } else {
+      pipeline = pipeline.toFormat("jpeg"); // default
+    }
+
+    // Save processed file
+    await pipeline.toFile(processedPath);
+
+    // Clean up temp upload
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error("Temp file cleanup failed:", err);
+    });
+
+    // Respond with file
+    res.sendFile(processedPath);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Image processing failed" });
+  }
 });
 
 app.listen(PORT, () => {

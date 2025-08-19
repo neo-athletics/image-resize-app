@@ -9,6 +9,10 @@ package-lock.json
 #cache directories
 server/cache/
 client/public/images/processed/
+
+#uploaded files
+/server/uploads/
+
 # Build outputs
 /client/dist/
 /server/dist/
