@@ -34,7 +34,7 @@ app.get("/api/images", async (req, res) => {
     filename: string;
     width?: string;
     height?: string;
-    format?: string;
+    format?: string | undefined | null;
   };
 
   if (!/^[a-zA-Z0-9._-]+$/.test(filename)) {
@@ -71,17 +71,30 @@ app.get("/api/images", async (req, res) => {
   const widthNum = Number(width);
   const heightNum = Number(height);
 
-  if (Number.isNaN(widthNum) || Number.isNaN(heightNum)) {
-    return res.status(400).send("Width and height must be valid numbers.");
-  }
-
-  console.log(fullFilePath);
-  const outputPath = processImage(fullFilePath, {
+  // if (Number.isNaN(widthNum) || Number.isNaN(heightNum)) {
+  //   return res.status(400).send("Width and height must be valid numbers.");
+  // }
+  console.log(
+    "Processing image:",
+    fullFilePath,
+    filename,
     widthNum,
     heightNum,
-    format,
+    format
+  );
+
+  let ext = format ? format : path.parse(fullFilePath).ext.slice(1);
+
+  const outputPath = processImage(fullFilePath, filename, {
+    widthNum,
+    heightNum,
+    format: ext,
   });
-  // res.json({ message: "API is working!" });
+
+  if (!outputPath) {
+    return res.status(500).send("Error processing image");
+  }
+  // Send the processed image file
   res.sendFile(await outputPath);
 });
 
@@ -93,41 +106,48 @@ app.post("/upload", upload.single("image"), async (req, res) => {
       console.log("No file uploaded");
       return res.status(400).json({ error: "No file uploaded" });
     }
-    let metadata = getMetadata(req.file.path);
 
     const { width, height, format } = req.body; // user inputs
 
-    // Start sharp pipeline
-    let pipeline = sharp(req.file.path);
+    // // Start sharp pipeline
+    // let pipeline = sharp(req.file.path);
 
-    // Conditionally apply resize
-    if (width || height) {
-      pipeline = pipeline.resize(
-        width ? parseInt(width, 10) : undefined,
-        height ? parseInt(height, 10) : undefined
-      );
-    }
-    const buffer = await pipeline.toBuffer(); // triggers processing
-    const updatedMeta = await sharp(buffer).metadata();
-    console.log(updatedMeta, "updated metadata after resize");
-    const processedPath = path.join(
-      __dirname,
-      "cache",
-      `${path.parse(req.file.originalname).name}_${
-        width || (await metadata).width
-      }x${height || (await metadata).height}.${
-        allowedExtensions.includes(`.${format}`) || "jpeg"
-      }`
-    );
-    // Conditionally apply format
-    if (format && allowedExtensions.includes(`.${format}`)) {
-      pipeline = pipeline.toFormat(format as keyof sharp.FormatEnum);
-    } else {
-      pipeline = pipeline.toFormat("jpeg"); // default
-    }
+    // // Conditionally apply resize
+    // if (width || height) {
+    //   pipeline = pipeline.resize(
+    //     width ? parseInt(width, 10) : undefined,
+    //     height ? parseInt(height, 10) : undefined
+    //   );
+    // }
 
-    // Save processed file
-    await pipeline.toFile(processedPath);
+    // const buffer = await pipeline.toBuffer(); // triggers processing
+    // const updatedMeta = await sharp(buffer).metadata();
+
+    // const processedPath = path.join(
+    //   __dirname,
+    //   "cache",
+    //   `${path.parse(req.file.originalname).name}_${
+    //     width || updatedMeta.width
+    //   }x${height || updatedMeta.height}.${
+    //     allowedExtensions.includes(`.${format}`) || "jpeg"
+    //   }`
+    // );
+
+    // // Conditionally apply format
+    // if (format && allowedExtensions.includes(`.${format}`)) {
+    //   pipeline = pipeline.toFormat(format as keyof sharp.FormatEnum);
+    // } else {
+    //   pipeline = pipeline.toFormat("jpeg"); // default
+    // }
+
+    // // Save processed file
+    // await pipeline.toFile(processedPath);
+    const filename = path.parse(req.file.originalname).name;
+    const processedPath = await processImage(req.file.path, filename, {
+      widthNum: parseInt(width, 10) || undefined,
+      heightNum: parseInt(height, 10) || undefined,
+      format: format || "jpeg", // default to jpeg if no format provided
+    });
 
     // Clean up temp upload
     fs.unlink(req.file.path, (err) => {

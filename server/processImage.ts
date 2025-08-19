@@ -2,7 +2,6 @@ import path from "path";
 import sharp, { FormatEnum } from "sharp";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { getMetadata } from "./readImage";
 
 // Needed for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -15,13 +14,18 @@ if (!fs.existsSync(CACHE_DIR)) {
 }
 async function processImage(
   imagePath: string,
-  options: { widthNum?: number; heightNum?: number; format?: string }
+  fileName: string,
+  options: {
+    widthNum?: number;
+    heightNum?: number;
+    format?: string | undefined | null;
+  }
 ) {
   const { widthNum: width, heightNum: height, format } = options;
 
   // Extract filename from the path
   // Example: "/some/directory/images/photo.png" -> "photo.png"
-  const filename = path.parse(imagePath).name;
+  // const filename = path.parse(imagePath).name;
   // Define settings for different formats
   interface SettingsType {
     jpeg: { quality: number; progressive: boolean; mozjpeg: boolean };
@@ -59,10 +63,11 @@ async function processImage(
 
   try {
     let image = await sharp(imagePath);
-    let metadata = getMetadata(imagePath);
     if (width || height) {
       image = image.resize(width || null, height || null);
     }
+    const buffer = await image.toBuffer(); // triggers processing
+    const updatedMeta = await sharp(buffer).metadata();
 
     // if image format is applied change the extension to the new format
     if (allowedFormats.includes(format as keyof SettingsType)) {
@@ -75,9 +80,10 @@ async function processImage(
       throw new Error("Unsupported format");
     }
 
-    const cacheFileName = `${filename}_${width || (await metadata).width}x${
-      height || (await metadata).height
+    const cacheFileName = `${fileName}_${width || updatedMeta.width}x${
+      height || updatedMeta.height
     }.${format}`;
+
     const cacheFilePath = path.join(CACHE_DIR, cacheFileName);
 
     // Serve from cache if it exists
