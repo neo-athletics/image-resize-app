@@ -3,10 +3,8 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { processImage } from "./processImage";
-import fs, { read } from "fs";
+import fs from "fs";
 import multer from "multer";
-import sharp from "sharp";
-import { getMetadata } from "./readImage";
 
 // Initialize Express app
 const app = express();
@@ -71,18 +69,6 @@ app.get("/api/images", async (req, res) => {
   const widthNum = Number(width);
   const heightNum = Number(height);
 
-  // if (Number.isNaN(widthNum) || Number.isNaN(heightNum)) {
-  //   return res.status(400).send("Width and height must be valid numbers.");
-  // }
-  console.log(
-    "Processing image:",
-    fullFilePath,
-    filename,
-    widthNum,
-    heightNum,
-    format
-  );
-
   let ext = format ? format : path.parse(fullFilePath).ext.slice(1);
 
   const outputPath = processImage(fullFilePath, filename, {
@@ -108,37 +94,6 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     }
 
     const { width, height, format } = req.body; // user inputs
-
-    // // Start sharp pipeline
-    // let pipeline = sharp(req.file.path);
-
-    // // Conditionally apply resize
-    // if (width || height) {
-    //   pipeline = pipeline.resize(
-    //     width ? parseInt(width, 10) : undefined,
-    //     height ? parseInt(height, 10) : undefined
-    //   );
-    // }
-
-    // const buffer = await pipeline.toBuffer(); // triggers processing
-    // const updatedMeta = await sharp(buffer).metadata();
-
-    // const processedPath = path.join(
-    //   __dirname,
-    //   "cache",
-    //   `${path.parse(req.file.originalname).name}_${
-    //     width || updatedMeta.width
-    //   }x${height || updatedMeta.height}.${
-    //     allowedExtensions.includes(`.${format}`) || "jpeg"
-    //   }`
-    // );
-
-    // // Conditionally apply format
-    // if (format && allowedExtensions.includes(`.${format}`)) {
-    //   pipeline = pipeline.toFormat(format as keyof sharp.FormatEnum);
-    // } else {
-    //   pipeline = pipeline.toFormat("jpeg"); // default
-    // }
 
     // // Save processed file
     // await pipeline.toFile(processedPath);
