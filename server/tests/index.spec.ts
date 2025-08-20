@@ -3,7 +3,7 @@ import * as path from "path";
 
 describe("Index Spec", () => {
   it("should have a valid structure", () => {
-    expect(true).toBeTrue(); // Placeholder for actual test logic
+    expect(true).toBeTrue();
   });
   it("should process an image correctly", async () => {
     const imagePath = path.resolve(
