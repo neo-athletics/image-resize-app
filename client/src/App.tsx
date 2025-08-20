@@ -23,13 +23,13 @@ function App() {
             </div>
           </div>
         </div>
-        {url && (
-          <div className="mt-10">
-            <h2 className="text-2xl font-bold mb-4">Processed Image</h2>
-            <img src={url} alt="Processed" className="max-w-full h-auto" />
-          </div>
-        )}
       </div>
+      {url && (
+        <div className="result-section p-4 text-center">
+          <h2 className="text-2xl font-bold mb-4">Processed Image</h2>
+          <img src={url} alt="Processed" className="max-w-full h-auto m-auto" />
+        </div>
+      )}
     </div>
   );
 }
