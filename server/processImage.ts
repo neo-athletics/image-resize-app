@@ -60,14 +60,21 @@ async function processImage(
     "gif",
     "heif",
   ];
+  let buffer: Buffer;
+  let updatedMeta: sharp.Metadata;
 
   try {
     let image = await sharp(imagePath);
     if (width || height) {
       image = image.resize(width || null, height || null);
     }
-    const buffer = await image.toBuffer(); // triggers processing
-    const updatedMeta = await sharp(buffer).metadata();
+    try {
+      buffer = await image.toBuffer(); // triggers processing
+      updatedMeta = await sharp(buffer).metadata();
+    } catch (error) {
+      console.error("Error processing image:", error);
+      throw new Error("Input file is missing or of an unsupported type");
+    }
 
     // if image format is applied change the extension to the new format
     if (allowedFormats.includes(format as keyof SettingsType)) {
