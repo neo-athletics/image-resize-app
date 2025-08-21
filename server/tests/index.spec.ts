@@ -1,5 +1,10 @@
 import { processImage } from "../processImage";
 import * as path from "path";
+import supertest from "supertest";
+import { app } from "../../server";
+import { getMetadata } from "../readImage";
+
+const request = supertest(app);
 
 describe("Index Spec", () => {
   it("should have a valid structure", () => {
@@ -52,5 +57,52 @@ describe("Index Spec", () => {
     await expectAsync(
       processImage(imagePath, fileName, options)
     ).toBeRejectedWithError("Unsupported format");
+  });
+  it("should return 400 for invalid filename", async () => {
+    const response = await request.get(
+      "/api/images?filename=invalid/../name&width=200&height=200"
+    );
+    expect(response.status).toBe(400);
+    expect(response.text).toBe("Invalid filename");
+  });
+  it("should return 404 for non-existent file", async () => {
+    const response = await request.get(
+      "/api/images?filename=nonexistent&width=200&height=200"
+    );
+    expect(response.status).toBe(404);
+    expect(response.text).toBe("File not found");
+  });
+  it("should return 400 if filename is missing", async () => {
+    const response = await request.post("/upload").send({
+      width: "200",
+      height: "200",
+      format: "jpeg",
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("No file uploaded");
+  });
+  it("should upload and process an image successfully", async () => {
+    const response = await request
+      .post("/upload")
+      .attach(
+        "image",
+        path.resolve(__dirname, "../../client/public/images/sammy.png")
+      )
+      .field("width", "200")
+      .field("height", "200")
+      .field("format", "jpeg");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe("image/jpeg");
+  });
+  it("should return image metadata", async () => {
+    const imagePath = path.resolve(
+      __dirname,
+      "../../client/public/images/sammy.png"
+    );
+    const metadata = await getMetadata(imagePath);
+    expect(metadata).toBeDefined();
+    expect(metadata.width).toBeGreaterThan(0);
+    expect(metadata.height).toBeGreaterThan(0);
   });
 });

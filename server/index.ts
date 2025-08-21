@@ -110,7 +110,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     });
 
     // Respond with file
-    res.sendFile(processedPath);
+    res.status(200).sendFile(processedPath);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Image processing failed" });
@@ -120,3 +120,4 @@ app.post("/upload", upload.single("image"), async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+export { app };
